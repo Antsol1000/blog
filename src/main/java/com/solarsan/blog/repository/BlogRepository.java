@@ -1,30 +1,30 @@
 package com.solarsan.blog.repository;
 
-import com.solarsan.blog.model.UserEntity;
+import com.solarsan.blog.User;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.UUID;
 
 @Repository
 public class BlogRepository {
-    private final List<UserEntity> users;
+    private final Map<UUID, User> users;
 
     public BlogRepository() {
-        this.users = new ArrayList<>();
+        this.users = new HashMap<>();
     }
 
-    public void save(final UserEntity user) {
-        users.add(user);
+    public void save(final User user) {
+        users.put(UUID.fromString(user.getId()), user);
     }
 
-    public Optional<UserEntity> get(final UUID id) {
-        return users.stream().filter(x -> x.getId().equals(id)).findAny();
+    public User get(final UUID id) {
+        return users.get(id);
     }
 
-    public List<UserEntity> getAll() {
-        return List.copyOf(users);
+    public List<User> getAll() {
+        return List.copyOf(users.values());
     }
 }

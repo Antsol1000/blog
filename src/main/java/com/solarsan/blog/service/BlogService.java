@@ -2,14 +2,12 @@ package com.solarsan.blog.service;
 
 import com.google.protobuf.Empty;
 import com.solarsan.blog.*;
-import com.solarsan.blog.model.UserEntity;
 import com.solarsan.blog.repository.BlogRepository;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @GrpcService
 public class BlogService extends BlogServiceGrpc.BlogServiceImplBase {
@@ -21,44 +19,51 @@ public class BlogService extends BlogServiceGrpc.BlogServiceImplBase {
     }
 
     @Override
-    public void createUser(final NewUserRequest request, final StreamObserver<IdResponse> responseObserver) {
+    public void createUser(final NewUserRequest request, final StreamObserver<IdMessage> responseObserver) {
         final String name = request.getName();
         final UUID id = UUID.randomUUID();
 
-        final UserEntity user = new UserEntity(id, name);
+        final User user = User.newBuilder().setId(id.toString()).setName(name).build();
         System.out.printf("Created new user %s.%n", name);
         repository.save(user);
 
-        final IdResponse idResponse = IdResponse.newBuilder().setId(id.toString()).build();
-        responseObserver.onNext(idResponse);
+        final IdMessage idMessage = IdMessage.newBuilder().setId(id.toString()).build();
+        responseObserver.onNext(idMessage);
         responseObserver.onCompleted();
     }
 
     @Override
-    public void getUser(final IdRequest request, final StreamObserver<UserResponse> responseObserver) {
-        final UUID id = UUID.fromString(request.getId());
+    public void createNote(final NewNoteRequest request, final StreamObserver<Empty> responseObserver) {
+        final UUID userId = UUID.fromString(request.getUserId());
+        final Note note = request.getNote();
 
-        System.out.printf("Request for user with id %s.%n", id);
-        final UserEntity user = repository.get(id).get();
+        final User user = repository.get(userId).toBuilder().addNotes(note).build();
+        System.out.printf("Created new note for user %s.%n", user.getName());
+        repository.save(user);
 
-        final UserResponse userResponse =
-                UserResponse.newBuilder().setId(user.getId().toString()).setName(user.getName()).build();
-        responseObserver.onNext(userResponse);
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getUser(final IdMessage request, final StreamObserver<User> responseObserver) {
+        final UUID userId = UUID.fromString(request.getId());
+
+        System.out.printf("Requested for user with id %s.%n", userId);
+        final User user = repository.get(userId);
+
+        responseObserver.onNext(user);
         responseObserver.onCompleted();
     }
 
     @Override
     public void getUsers(final Empty request, final StreamObserver<UsersResponse> responseObserver) {
-        System.out.println("Request for all users.");
-        final List<UserEntity> users = repository.getAll();
+        System.out.println("Requested for all users.");
+        final List<User> users = repository.getAll();
 
-        final List<UserResponse> userResponses = users.stream().map(
-                u -> UserResponse.newBuilder().setId(u.getId().toString()).setName(u.getName()).build()
-        ).collect(Collectors.toList());
+        final UsersResponse usersResponse = UsersResponse.newBuilder().addAllUsers(users).build();
 
-        final UsersResponse usersResponse = UsersResponse.newBuilder().addAllUsers(userResponses).build();
         responseObserver.onNext(usersResponse);
         responseObserver.onCompleted();
     }
-
 }
