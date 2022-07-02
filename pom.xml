@@ -8,6 +8,7 @@
         <module>blog-api</module>
         <module>blog-server</module>
         <module>blog-client</module>
+        <module>blog-e2e</module>
     </modules>
 
     <groupId>com.solarsan</groupId>
