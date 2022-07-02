@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package com.solarsan.blog;
+
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "com.solarsan.blog";
+
+service BlogService {
+  rpc createUser(NewUserRequest) returns (IdResponse) {}
+  rpc getUser(IdRequest) returns (UserResponse) {}
+  rpc getUsers(google.protobuf.Empty) returns (UsersResponse) {}
+}
+
+message IdRequest {
+    string id = 1;
+  }
+
+message IdResponse {
+  string id = 1;
+}
+
+message NewUserRequest {
+  string name = 1;
+}
+
+message UserResponse {
+  string id = 1;
+  string name = 2;
+}
+
+message UsersResponse {
+  repeated UserResponse users = 1;
+}
